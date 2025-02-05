@@ -8,7 +8,7 @@ const PORT = 3002;
 const servefile=async(res,filepath,contenttype)=>{
     try {
         const data = await readFile(filepath);
-        res.writeHead(200, { "Content-Type": contenttype }); // Success
+        res.writeHead(200, { "Content-Type": contenttype }); // Successs
         res.end(data);
     } catch (error) {
         console.error(error);  // Log the error for debugging
