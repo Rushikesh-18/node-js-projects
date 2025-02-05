@@ -24,14 +24,36 @@
         <div class="display-field" id="displayField">Shorted URL will be displayed here</div>
     </div>
     <script>
-        document.getElementById('shortener').addEventListener('submit',(event)=>{
+        document.getElementById('shortener').addEventListener('submit',async(event)=>{
         event.preventDefault();
         const url = document.getElementById('url');
         const cname = document.getElementById('cname');
-        console.log(url.value, cname.value);
 
+        console.log(url, cname);
+            
+
+        try{
+            const response=await fetch("/shorten",{
+                method:"POST",
+                headers:{
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({url:url.value,cname:cname.value})
+            });
+
+            if(response.ok){
+                alert("Form submitted successfully");
+            }
+            else{
+                const err=await response.text();
+                alert(err);
+            }
+        }
+        catch(error){
+           console.log(error);
+        }
 })
     </script>
-    <script src="../script.js"></script>
+    
 </body>
 </html>

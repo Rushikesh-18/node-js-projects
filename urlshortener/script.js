@@ -1,56 +1,86 @@
 import { createServer } from 'http';
 import { readFile } from 'fs/promises';
 import path from 'path';
+import { writeFile } from 'fs/promises';
 
 const PORT = 3002;
+const DATA_FILE = path.join('data', "links.json");
 
-
-const servefile=async(res,filepath,contenttype)=>{
+const servefile = async (res, filepath, contenttype) => {
     try {
         const data = await readFile(filepath);
-        res.writeHead(200, { "Content-Type": contenttype }); // Successs
+        res.writeHead(200, { "Content-Type": contenttype }); // Success
         res.end(data);
     } catch (error) {
         console.error(error);  // Log the error for debugging
-        res.writeHead(404, { "Content-Type": contenttype });
+        res.writeHead(404, { "Content-Type": "text/html" });
         res.end("404 page not found");
     }
-}
+};
+
+const loadlinks = async () => {
+    try {
+        const data = await readFile(DATA_FILE, 'utf-8');
+        if (!data) {
+            return {};  // Return empty object if the file is empty
+        }
+
+        return JSON.parse(data);
+    } catch (error) {
+        if (error.code === "ENOENT") {  // ERROR NO ENTRY MEANS FILE NOT PRESENT
+            await writeFile(DATA_FILE, JSON.stringify({}));
+            return {};
+        }
+        throw error;
+    }
+};
+
+const savelinks = async (links) => {
+    return await writeFile(DATA_FILE, JSON.stringify(links));
+};
+
 const server = createServer(async (req, res) => {
     if (req.method === 'GET') {
         if (req.url === "/") {
-           
-           return servefile(res,
-            path.join("public", "index.html"),"text/html");
-           
+            return servefile(res, path.join("public", "index.html"), "text/html");
         }
-        else if(req.url==="/style.css"){
-            return servefile(res,path.join("public","style.css"),"text/css");
+        else if (req.url === "/style.css") {
+            return servefile(res, path.join("public", "style.css"), "text/css");
         }
         else {
             res.writeHead(404, { "Content-Type": "text/html" });
             res.end("404 page not found");
         }
-    } else {
-        res.writeHead(405, { "Content-Type": "text/html" }); // Method Not Allowed
-        res.end("405 Method Not Allowed");
-    }
+    } else if (req.method === 'POST' && req.url === "/shorten") {  // Corrected placement for POST handler
+        const links = await loadlinks();
+        let body = "";
+        req.on("data", (chunk) => (body += chunk));
+        req.on('end', async () => {
+            
+            
+            const { url, cname } = JSON.parse(body);
 
-    if(req.method==='POST' && req.url==="/shorten"){
-        const body="";
-        req.on("data",(chunk)=>{
-            body+=chunk;
-        })
-        req.on('end',async()=>{
-            const {url,shortcode} = JSON.parse(body);
-
-            if(!url || !shortcode){
-                res.writeHead(400,{"Content-Type":"text/plain"});
+            if (!url ) {
+                res.writeHead(400, { "Content-Type": "text/plain" });
                 return res.end('url or shortcode is missing');
             }
 
-        })
+            const finalshortcode = cname;
+            if (links[finalshortcode]) {
+                res.writeHead(400, { "Content-Type": "text/plain" });
+                return res.end("Short code already exists, Please choose another");
+            }
 
+            links[finalshortcode] = url;
+            await savelinks(links);
+
+            res.writeHead(200, { "Content-Type": "text/plain" });
+            res.end();
+        });
+
+    } else {
+        res.writeHead(405, { "Content-Type": "text/html" });  // Method Not Allowed
+        res.end("405 Method Not Allowed");
     }
 });
 
