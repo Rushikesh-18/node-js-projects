@@ -47,7 +47,20 @@ const server = createServer(async (req, res) => {
         else if (req.url === "/style.css") {
             return servefile(res, path.join("public", "style.css"), "text/css");
         }
+        else if(req.url=="/links"){
+            const links=await loadlinks();
+            res.writeHead(200, { "Content-Type": "application/json" });
+            return res.end(JSON.stringify(links));
+        }
         else {
+            // res.writeHead(404, { "Content-Type": "text/html" });
+            // res.end("404 page not found");
+            const links=await loadlinks();
+            const shortcode=req.url.slice(1);
+            if(links[shortcode]){
+                res.writeHead(302,{"Location": links[shortcode],  "Content-Type": "text/html" });  //302 for temporary redirrctions
+                return res.end();
+            }
             res.writeHead(404, { "Content-Type": "text/html" });
             res.end("404 page not found");
         }

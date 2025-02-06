@@ -24,12 +24,36 @@
         <div class="display-field" id="displayField">Shorted URL will be displayed here</div>
     </div>
     <script>
+        const fetchshortenedurl=async()=>{
+            const response=await fetch("/links");
+            const links=await response.json();
+            console.log(links);
+
+            const display=document.getElementById('displayField');
+            display.innerHTML="";
+
+            for (const [cname,url]of Object.entries(links)){
+                const li=document.createElement('li');
+                const truncatedURL = (url) => {
+                    if (url.length >= 30) {
+                        return `${url.slice(0, 30)}...`;  // Truncate and add ellipsis
+                    } else {
+                        return url;  // Return the URL as is
+                    }
+                };
+
+                li.innerHTML = `<a href="/${cname}" target="_blank">${window.location.origin}/${cname}</a> - ${truncatedURL(url)}`;
+
+
+                display.appendChild(li);
+            }
+        }
         document.getElementById('shortener').addEventListener('submit',async(event)=>{
         event.preventDefault();
         const url = document.getElementById('url');
         const cname = document.getElementById('cname');
 
-        console.log(url, cname);
+        console.log(url.value, cname.value);
             
 
         try{
@@ -42,7 +66,9 @@
             });
 
             if(response.ok){
+                fetchshortenedurl();
                 alert("Form submitted successfully");
+                event.target.reset();
             }
             else{
                 const err=await response.text();
@@ -52,6 +78,7 @@
         catch(error){
            console.log(error);
         }
+        fetchshortenedurl();
 })
     </script>
     
