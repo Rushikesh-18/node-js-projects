@@ -58,6 +58,9 @@ const server = createServer(async (req, res) => {
             const links=await loadlinks();
             const shortcode=req.url.slice(1);
             if(links[shortcode]){
+                /* The line `res.writeHead(302,{"Location": links[shortcode],  "Content-Type":
+                "text/html" });` is setting the response header for a 302 status code, which
+                indicates a temporary redirection. */
                 res.writeHead(302,{"Location": links[shortcode],  "Content-Type": "text/html" });  //302 for temporary redirrctions
                 return res.end();
             }
